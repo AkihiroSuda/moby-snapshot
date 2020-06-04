@@ -1,0 +1,42 @@
+name: Release
+on:
+  push:
+    tags:
+    - 'snapshot-*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v2
+    - run: ./make.sh
+    - run: sha256sum moby-snapshot.tbz
+    - name: "Create release"
+      uses: actions/create-release@v1
+      id: create_release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: ${{ github.ref }}
+        body: "Built automatically on GitHub Actions. See the log for the SHA256SUM. https://github.com/${{ github.repository }}/actions?query=workflow%3ARelease"
+        draft: false
+    - name: "Upload moby-snapshot.tbz"
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./moby-snapshot.tbz
+        asset_name: moby-snapshot.tbz
+        asset_content_type: application/octet-stream
+    - name: "Upload _artifact/VERSION.md"
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./_artifact/VERSION.md
+        asset_name: VERSION.md
+        asset_content_type: text/plain
