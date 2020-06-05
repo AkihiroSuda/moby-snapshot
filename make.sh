@@ -1,9 +1,8 @@
 #!/bin/bash
 set -eux -o pipefail
 
-# https://github.com/moby/moby/pull/41067
-: ${MOBY_REPO=https://github.com/AkihiroSuda/docker.git}
-: ${MOBY_COMMIT=f758d598c5170036fd230cadbabbf7f558114f67}
+: ${MOBY_REPO=https://github.com/moby/moby.git}
+: ${MOBY_COMMIT=master}
 : ${CONTAINERD_COMMIT=master}
 : ${RUNC_COMMIT=master}
 : ${DOCKER_CLI_REPO=https://github.com/docker/cli.git}
