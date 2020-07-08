@@ -63,3 +63,76 @@ jobs:
       with:
         name: moby-snapshot-fedora-32-x86_64-rpm.tbz
         path: ./moby-snapshot-fedora-32-x86_64-rpm.tbz
+  release:
+    name: "Release (tags: snapshot-*)"
+    needs: [version, binary, deb_ubuntu_focal, rpm_fedora_32]
+    if: startsWith(github.ref, 'refs/tags/snapshot-')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/download-artifact@v2
+      with:
+        name: _VERSION
+        path: _tmp
+    - uses: actions/download-artifact@v2
+      with:
+        name: moby-snapshot-x86_64.tbz
+        path: _tmp
+    - uses: actions/download-artifact@v2
+      with:
+        name: moby-snapshot-ubuntu-focal-x86_64-deb.tbz
+        path: _tmp
+    - uses: actions/download-artifact@v2
+      with:
+        name: moby-snapshot-fedora-32-x86_64-rpm.tbz
+        path: _tmp
+    - name: SHA256SUMS
+      run: |
+        cd _tmp
+        sha256sum *
+    - name: "Create release"
+      uses: actions/create-release@v1
+      id: create_release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: ${{ github.ref }}
+        body: "Built automatically on GitHub Actions. See the log for the SHA256SUMS. https://github.com/${{ github.repository }}/actions?query=workflow%3ARelease"
+        draft: false
+    - name: "Upload _VERSION"
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: _tmp/_VERSION
+        asset_name: _VERSION
+        asset_content_type: text/plain
+    - name: "Upload moby-snapshot-x86_64.tbz"
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: _tmp/moby-snapshot-x86_64.tbz
+        asset_name: moby-snapshot-x86_64.tbz
+        asset_content_type: application/octet-stream
+    - name: "Upload moby-snapshot-ubuntu-focal-x86_64-deb.tbz"
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: _tmp/moby-snapshot-ubuntu-focal-x86_64-deb.tbz
+        asset_name: moby-snapshot-ubuntu-focal-x86_64-deb.tbz
+        asset_content_type: application/octet-stream
+    - name: "Upload moby-snapshot-fedora-32-x86_64-rpm.tbz"
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: _tmp/moby-snapshot-fedora-32-x86_64-rpm.tbz
+        asset_name: moby-snapshot-fedora-32-x86_64-rpm.tbz
+        asset_content_type: application/octet-stream
