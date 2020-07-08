@@ -1,3 +1,2 @@
-_artifact
-_gopath
-moby-snapshot.tbz
+_*
+*.tbz

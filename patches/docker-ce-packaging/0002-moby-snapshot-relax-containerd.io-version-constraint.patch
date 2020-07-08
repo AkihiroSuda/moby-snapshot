@@ -1,0 +1,40 @@
+From f003b4cd90779476594a8fb8a4bfa9f04e5164b2 Mon Sep 17 00:00:00 2001
+From: Akihiro Suda <akihiro.suda.cz@hco.ntt.co.jp>
+Date: Wed, 8 Jul 2020 19:16:30 +0900
+Subject: [PATCH 2/2] [moby-snapshot] relax containerd.io version constraint
+
+Signed-off-by: Akihiro Suda <akihiro.suda.cz@hco.ntt.co.jp>
+---
+ deb/common/control       | 2 +-
+ rpm/SPECS/docker-ce.spec | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/deb/common/control b/deb/common/control
+index edb1bd8..490aba4 100644
+--- a/deb/common/control
++++ b/deb/common/control
+@@ -27,7 +27,7 @@ Vcs-Git: git://github.com/moby/moby.git
+ 
+ Package: moby-snapshot
+ Architecture: linux-any
+-Depends: moby-snapshot-cli, containerd.io (>= 1.2.2-3), iptables, libseccomp2 (>= 2.3.0), ${shlibs:Depends}
++Depends: moby-snapshot-cli, containerd.io, iptables, libseccomp2 (>= 2.3.0), ${shlibs:Depends}
+ Recommends: ca-certificates,
+             git,
+             pigz,
+diff --git a/rpm/SPECS/docker-ce.spec b/rpm/SPECS/docker-ce.spec
+index e885b5b..4382916 100644
+--- a/rpm/SPECS/docker-ce.spec
++++ b/rpm/SPECS/docker-ce.spec
+@@ -27,7 +27,7 @@ Requires: ( iptables or nftables )
+ Requires: iptables
+ %endif
+ Requires: libcgroup
+-Requires: containerd.io >= 1.2.2-3
++Requires: containerd.io
+ Requires: tar
+ Requires: xz
+ 
+-- 
+2.25.1
+
