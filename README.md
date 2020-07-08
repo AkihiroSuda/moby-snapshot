@@ -3,12 +3,12 @@
 Binary snapshots of [Moby](https://github.com/moby/moby) with containerd and runc.
 Irregularly updated.
 
-# Download
-[Here](https://github.com/AkihiroSuda/moby-snapshot-x86_64/releases)
+## Download
+[Here](https://github.com/AkihiroSuda/moby-snapshot/releases)
 
-# Usage
+## Usage
 
-## Static binaries
+### Static binaries
 ```console
 $ tar xjvf moby-snapshot-x86_64.tbz
 moby-snapshot-x86_64/
@@ -31,8 +31,8 @@ $ sudo cp ./moby-snapshot-x86_64/bin/* /usr/local/bin
 $ sudo dockerd
 ```
 
-## dpkg
-Available for Ubuntu 20.04 (Focal)
+### deb
+Available for Ubuntu 20.04 (Focal Fossa)
 
 ```console
 $ tar xjvf moby-snapshot-ubuntu-focal-x86_64-deb.tbz 
@@ -42,7 +42,7 @@ moby-snapshot-cli_0.0.0-20200706131654-66ea6250a1-0~ubuntu-focal_amd64.deb
 $ sudo apt-get install ./*.deb
 ```
 
-## rpm
+### rpm
 Available for Fedora 32
 
 ```console
@@ -52,3 +52,6 @@ moby-snapshot-0.0.0.20200706131654.66ea6250a1-0.fc32.x86_64.rpm
 moby-snapshot-cli-0.0.0.20200706131654.66ea6250a1-0.fc32.x86_64.rpm
 $ sudo dnf install ./*.rpm
 ```
+
+Works on cgroup v2 hosts by default.
+No need to tweak the `systemd.unified_cgroup_hierarchy` kernel cmdline.
