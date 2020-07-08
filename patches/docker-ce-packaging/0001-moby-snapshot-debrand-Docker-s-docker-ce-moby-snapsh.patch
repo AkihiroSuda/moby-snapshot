@@ -1,0 +1,263 @@
+From 324aa67afd1ebf8856094f1acd597f60ed915881 Mon Sep 17 00:00:00 2001
+From: Akihiro Suda <akihiro.suda.cz@hco.ntt.co.jp>
+Date: Wed, 8 Jul 2020 17:50:57 +0900
+Subject: [PATCH 1/2] [moby-snapshot] debrand Docker
+ (s/docker-ce/moby-snapshot/g)
+
+Signed-off-by: Akihiro Suda <akihiro.suda.cz@hco.ntt.co.jp>
+---
+ deb/build-deb                |  2 +-
+ deb/common/control           | 48 +++++++++++-------------------------
+ deb/common/rules             | 28 ++++++++++-----------
+ rpm/SPECS/docker-ce-cli.spec | 20 ++++++---------
+ rpm/SPECS/docker-ce.spec     | 21 ++++++----------
+ 5 files changed, 44 insertions(+), 75 deletions(-)
+
+diff --git a/deb/build-deb b/deb/build-deb
+index 26801d8..f317b46 100755
+--- a/deb/build-deb
++++ b/deb/build-deb
+@@ -49,4 +49,4 @@ echo VERSION BBB $VERSION
+ dpkg-buildpackage -uc -us -I.git
+ destination="/build"
+ mkdir -p "$destination"
+-mv -v /root/docker* "$destination"
++mv -v /root/moby* "$destination"
+diff --git a/deb/common/control b/deb/common/control
+index c41afc7..edb1bd8 100644
+--- a/deb/common/control
++++ b/deb/common/control
+@@ -1,7 +1,7 @@
+-Source: docker-ce
++Source: moby-snapshot
+ Section: admin
+ Priority: optional
+-Maintainer: Docker <support@docker.com>
++Maintainer: Akihiro Suda
+ Build-Depends: bash,
+                bash-completion,
+                libbtrfs-dev | btrfs-tools,
+@@ -21,13 +21,13 @@ Build-Depends: bash,
+                make,
+                pkg-config
+ Standards-Version: 3.9.6
+-Homepage: https://www.docker.com
+-Vcs-Browser: https://github.com/docker/docker
+-Vcs-Git: git://github.com/docker/docker.git
++Homepage: https://github.com/AkihiroSuda/moby-snapshot
++Vcs-Browser: https://github.com/moby/moby
++Vcs-Git: git://github.com/moby/moby.git
+ 
+-Package: docker-ce
++Package: moby-snapshot
+ Architecture: linux-any
+-Depends: docker-ce-cli, containerd.io (>= 1.2.2-3), iptables, libseccomp2 (>= 2.3.0), ${shlibs:Depends}
++Depends: moby-snapshot-cli, containerd.io (>= 1.2.2-3), iptables, libseccomp2 (>= 2.3.0), ${shlibs:Depends}
+ Recommends: ca-certificates,
+             git,
+             pigz,
+@@ -35,32 +35,14 @@ Recommends: ca-certificates,
+             libltdl7,
+             ${apparmor:Recommends}
+ Suggests: aufs-tools [amd64], cgroupfs-mount | cgroup-lite
+-Conflicts: docker (<< 1.5~), docker.io, lxc-docker, lxc-docker-virtual-package, docker-engine, docker-engine-cs
+-Replaces: docker-engine
+-Description: Docker: the open-source application container engine
+- Docker is a product for you to build, ship and run any application as a
+- lightweight container
+- .
+- Docker containers are both hardware-agnostic and platform-agnostic. This means
+- they can run anywhere, from your laptop to the largest cloud compute instance and
+- everything in between - and they don't require you to use a particular
+- language, framework or packaging system. That makes them great building blocks
+- for deploying and scaling web apps, databases, and backend services without
+- depending on a particular stack or provider.
++Conflicts: docker (<< 1.5~), docker.io, lxc-docker, lxc-docker-virtual-package, docker-engine, docker-engine-cs, docker-ce
++Replaces: docker-engine, docker-ce
++Description: moby-snapshot runtime package
+ 
+-Package: docker-ce-cli
++Package: moby-snapshot-cli
+ Architecture: linux-any
+ Depends: ${shlibs:Depends}
+-Conflicts: docker (<< 1.5~), docker.io, lxc-docker, lxc-docker-virtual-package, docker-engine, docker-engine-cs
+-Replaces: docker-ce (<< 5:0)
+-Breaks: docker-ce (<< 5:0)
+-Description: Docker CLI: the open-source application container engine
+- Docker is a product for you to build, ship and run any application as a
+- lightweight container
+- .
+- Docker containers are both hardware-agnostic and platform-agnostic. This means
+- they can run anywhere, from your laptop to the largest cloud compute instance and
+- everything in between - and they don't require you to use a particular
+- language, framework or packaging system. That makes them great building blocks
+- for deploying and scaling web apps, databases, and backend services without
+- depending on a particular stack or provider.
++Conflicts: docker (<< 1.5~), docker.io, lxc-docker, lxc-docker-virtual-package, docker-engine, docker-engine-cs, docker-ce-cli
++Replaces: docker-ce-cli
++Breaks: docker-ce-cli
++Description: moby-snapshot CLI package
+diff --git a/deb/common/rules b/deb/common/rules
+index 5d8705f..cf82f83 100755
+--- a/deb/common/rules
++++ b/deb/common/rules
+@@ -4,7 +4,7 @@ VERSION ?= $(shell cat engine/VERSION)
+ 
+ override_dh_gencontrol:
+ 	# if we're on Ubuntu, we need to Recommends: apparmor
+-	echo 'apparmor:Recommends=$(shell dpkg-vendor --is Ubuntu && echo apparmor)' >> debian/docker-ce.substvars
++	echo 'apparmor:Recommends=$(shell dpkg-vendor --is Ubuntu && echo apparmor)' >> debian/moby-snapshot.substvars
+ 	dh_gencontrol
+ 
+ override_dh_auto_build:
+@@ -31,26 +31,26 @@ override_dh_strip:
+ 	# Go has lots of problems with stripping, so just don't
+ 
+ override_dh_auto_install:
+-	# docker-ce-cli install
+-	install -D -m 0644 /go/src/github.com/docker/cli/contrib/completion/fish/docker.fish debian/docker-ce-cli/usr/share/fish/vendor_completions.d/docker.fish
+-	install -D -m 0644 /go/src/github.com/docker/cli/contrib/completion/zsh/_docker debian/docker-ce-cli/usr/share/zsh/vendor-completions/_docker
+-	install -D -m 0755 /go/src/github.com/docker/cli/build/docker debian/docker-ce-cli/usr/bin/docker
++	# moby-snapshot-cli install
++	install -D -m 0644 /go/src/github.com/docker/cli/contrib/completion/fish/docker.fish debian/moby-snapshot-cli/usr/share/fish/vendor_completions.d/docker.fish
++	install -D -m 0644 /go/src/github.com/docker/cli/contrib/completion/zsh/_docker debian/moby-snapshot-cli/usr/share/zsh/vendor-completions/_docker
++	install -D -m 0755 /go/src/github.com/docker/cli/build/docker debian/moby-snapshot-cli/usr/bin/docker
+ 	set -e;cd /sources && \
+ 		tar xzf plugin-installers.tgz; \
+ 		for installer in plugins/*.installer; do \
+-			DESTDIR=/root/build-deb/debian/docker-ce-cli \
++			DESTDIR=/root/build-deb/debian/moby-snapshot-cli \
+ 			PREFIX=/usr/libexec/docker/cli-plugins \
+ 				bash $${installer} install_plugin; \
+ 		done
+-	# docker-ce install
+-	install -D -m 0644 /sources/docker.service debian/docker-ce/lib/systemd/system/docker.service
+-	install -D -m 0644 /sources/docker.socket debian/docker-ce/lib/systemd/system/docker.socket
+-	install -D -m 0755 $(shell readlink -e engine/bundles/dynbinary-daemon/dockerd) debian/docker-ce/usr/bin/dockerd
+-	install -D -m 0755 /usr/local/bin/docker-proxy debian/docker-ce/usr/bin/docker-proxy
+-	install -D -m 0755 /usr/local/bin/docker-init debian/docker-ce/usr/bin/docker-init
++	# moby-snapshot install
++	install -D -m 0644 /sources/docker.service debian/moby-snapshot/lib/systemd/system/docker.service
++	install -D -m 0644 /sources/docker.socket debian/moby-snapshot/lib/systemd/system/docker.socket
++	install -D -m 0755 $(shell readlink -e engine/bundles/dynbinary-daemon/dockerd) debian/moby-snapshot/usr/bin/dockerd
++	install -D -m 0755 /usr/local/bin/docker-proxy debian/moby-snapshot/usr/bin/docker-proxy
++	install -D -m 0755 /usr/local/bin/docker-init debian/moby-snapshot/usr/bin/docker-init
+ 
+ override_dh_installinit:
+-	# use "docker" as our service name, not "docker-ce"
++	# use "docker" as our service name, not "moby-snapshot"
+ 	dh_installinit --name=docker
+ 
+ override_dh_shlibdeps:
+@@ -59,7 +59,7 @@ override_dh_shlibdeps:
+ override_dh_install:
+ 	dh_install
+ 	# TODO Can we do this from within our container?
+-	dh_apparmor --profile-name=docker-ce -pdocker-ce
++	dh_apparmor --profile-name=moby-snapshot -pmoby-snapshot
+ 
+ %:
+ 	dh $@ --with=bash-completion $(shell command -v dh_systemd_enable > /dev/null 2>&1 && echo --with=systemd)
+diff --git a/rpm/SPECS/docker-ce-cli.spec b/rpm/SPECS/docker-ce-cli.spec
+index a6959df..8b037db 100644
+--- a/rpm/SPECS/docker-ce-cli.spec
++++ b/rpm/SPECS/docker-ce-cli.spec
+@@ -1,6 +1,6 @@
+ %global debug_package %{nil}
+ 
+-Name: docker-ce-cli
++Name: moby-snapshot-cli
+ Version: %{_version}
+ Release: %{_release}%{?dist}
+ Epoch: 1
+@@ -9,9 +9,9 @@ Group: Tools/Docker
+ License: ASL 2.0
+ Source0: cli.tgz
+ Source1: plugin-installers.tgz
+-URL: https://www.docker.com
+-Vendor: Docker
+-Packager: Docker <support@docker.com>
++URL: https://github.com/AkihiroSuda/moby-snapshot
++Vendor: Moby
++Packager: Akihiro Suda
+ 
+ # required packages on install
+ Requires: /bin/sh
+@@ -26,17 +26,11 @@ Conflicts: docker-io
+ Conflicts: docker-engine-cs
+ Conflicts: docker-ee
+ Conflicts: docker-ee-cli
++Conflicts: docker-ce
++Conflicts: docker-ce-cli
+ 
+ %description
+-Docker is is a product for you to build, ship and run any application as a
+-lightweight container.
+-
+-Docker containers are both hardware-agnostic and platform-agnostic. This means
+-they can run anywhere, from your laptop to the largest cloud compute instance and
+-everything in between - and they don't require you to use a particular
+-language, framework or packaging system. That makes them great building blocks
+-for deploying and scaling web apps, databases, and backend services without
+-depending on a particular stack or provider.
++moby-snapshot CLI package
+ 
+ %prep
+ %setup -q -c -n src -a 1
+diff --git a/rpm/SPECS/docker-ce.spec b/rpm/SPECS/docker-ce.spec
+index 7422354..e885b5b 100644
+--- a/rpm/SPECS/docker-ce.spec
++++ b/rpm/SPECS/docker-ce.spec
+@@ -3,7 +3,7 @@
+ # BTRFS is enabled by default, but can be disabled by defining _without_btrfs
+ %{!?_with_btrfs: %{!?_without_btrfs: %define _with_btrfs 1}}
+ 
+-Name: docker-ce
++Name: moby-snapshot
+ Version: %{_version}
+ Release: %{_release}%{?dist}
+ Epoch: 3
+@@ -13,11 +13,11 @@ Source2: docker.socket
+ Summary: The open-source application container engine
+ Group: Tools/Docker
+ License: ASL 2.0
+-URL: https://www.docker.com
+-Vendor: Docker
+-Packager: Docker <support@docker.com>
++URL: https://github.com/AkihiroSuda/moby-snapshot
++Vendor: Moby
++Packager: Akihiro Suda
+ 
+-Requires: docker-ce-cli
++Requires: moby-snapshot-cli
+ Requires: container-selinux >= 2:2.74
+ Requires: libseccomp >= 2.3
+ Requires: systemd
+@@ -56,6 +56,7 @@ Conflicts: docker
+ Conflicts: docker-io
+ Conflicts: docker-engine-cs
+ Conflicts: docker-ee
++Conflicts: docker-ce
+ 
+ # Obsolete packages
+ Obsoletes: docker-ce-selinux
+@@ -63,15 +64,7 @@ Obsoletes: docker-engine-selinux
+ Obsoletes: docker-engine
+ 
+ %description
+-Docker is a product for you to build, ship and run any application as a
+-lightweight container.
+-
+-Docker containers are both hardware-agnostic and platform-agnostic. This means
+-they can run anywhere, from your laptop to the largest cloud compute instance and
+-everything in between - and they don't require you to use a particular
+-language, framework or packaging system. That makes them great building blocks
+-for deploying and scaling web apps, databases, and backend services without
+-depending on a particular stack or provider.
++moby-snapshot runtime package
+ 
+ %prep
+ %setup -q -c -n src -a 0
+-- 
+2.25.1
+

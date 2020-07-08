@@ -1,14 +1,65 @@
 name: Main
 on: [push, pull_request]
 jobs:
-  artifact:
+  version:
+    name: "Generate _VERSION"
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
     - uses: actions/checkout@v2
-    - run: ./make.sh
-    - run: sha256sum moby-snapshot.tbz
-    - uses: actions/upload-artifact@v1
+    - run: ./version.sh
+    - uses: actions/upload-artifact@v2
       with:
-        name: moby-snapshot.tbz
-        path: ./moby-snapshot.tbz
+        name: _VERSION
+        path: ./_VERSION
+  binary:
+    name: "Build binaries"
+    needs: version
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/download-artifact@v2
+      with:
+        name: _VERSION
+        path: _tmp
+    - run: mv _tmp/_VERSION _VERSION
+    - run: ./make-binary.sh
+    - uses: actions/upload-artifact@v2
+      with:
+        name: moby-snapshot-x86_64.tbz
+        path: ./moby-snapshot-x86_64.tbz
+  deb_ubuntu_focal:
+    name: "Build deb (Ubuntu 20.04 Focal)"
+    needs: version
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/download-artifact@v2
+      with:
+        name: _VERSION
+        path: _tmp
+    - run: mv _tmp/_VERSION _VERSION
+    - run: ./make-package.sh ubuntu focal
+    - uses: actions/upload-artifact@v2
+      with:
+        name: moby-snapshot-ubuntu-focal-x86_64-deb.tbz
+        path: ./moby-snapshot-ubuntu-focal-x86_64-deb.tbz
+  rpm_fedora_32:
+    name: "Build rpm (Fedora 32)"
+    needs: version
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/download-artifact@v2
+      with:
+        name: _VERSION
+        path: _tmp
+    - run: mv _tmp/_VERSION _VERSION
+    - run: ./make-package.sh fedora 32
+    - uses: actions/upload-artifact@v2
+      with:
+        name: moby-snapshot-fedora-32-x86_64-rpm.tbz
+        path: ./moby-snapshot-fedora-32-x86_64-rpm.tbz
