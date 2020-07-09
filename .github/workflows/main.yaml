@@ -63,9 +63,27 @@ jobs:
       with:
         name: moby-snapshot-fedora-32-x86_64-rpm.tbz
         path: ./moby-snapshot-fedora-32-x86_64-rpm.tbz
+  rpm_centos_8:
+    name: "Build rpm (CentOS 8)"
+    needs: version
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/download-artifact@v2
+      with:
+        name: _VERSION
+        path: _tmp
+    - run: mv _tmp/_VERSION _VERSION
+    - run: ./make-package.sh centos 8
+    - uses: actions/upload-artifact@v2
+      with:
+        name: moby-snapshot-centos-8-x86_64-rpm.tbz
+        path: ./moby-snapshot-centos-8-x86_64-rpm.tbz
+
   release:
     name: "Release (tags: snapshot-*)"
-    needs: [version, binary, deb_ubuntu_focal, rpm_fedora_32]
+    needs: [version, binary, deb_ubuntu_focal, rpm_fedora_32, rpm_centos_8]
     if: startsWith(github.ref, 'refs/tags/snapshot-')
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -85,6 +103,10 @@ jobs:
     - uses: actions/download-artifact@v2
       with:
         name: moby-snapshot-fedora-32-x86_64-rpm.tbz
+        path: _tmp
+    - uses: actions/download-artifact@v2
+      with:
+        name: moby-snapshot-centos-8-x86_64-rpm.tbz
         path: _tmp
     - name: SHA256SUMS
       run: |
@@ -135,4 +157,13 @@ jobs:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: _tmp/moby-snapshot-fedora-32-x86_64-rpm.tbz
         asset_name: moby-snapshot-fedora-32-x86_64-rpm.tbz
+        asset_content_type: application/octet-stream
+    - name: "Upload moby-snapshot-centos-8-x86_64-rpm.tbz"
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: _tmp/moby-snapshot-centos-8-x86_64-rpm.tbz
+        asset_name: moby-snapshot-centos-8-x86_64-rpm.tbz
         asset_content_type: application/octet-stream
