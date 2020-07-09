@@ -43,7 +43,7 @@ $ sudo apt-get install ./*.deb
 ```
 
 ### rpm
-Available for Fedora 32
+Available for Fedora 32 and CentOS 8
 
 ```console
 $ tar xjvf moby-snapshot-fedora-32-x86_64-rpm.tbz 
