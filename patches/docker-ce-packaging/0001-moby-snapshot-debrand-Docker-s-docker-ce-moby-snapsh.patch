@@ -1,4 +1,4 @@
-From 324aa67afd1ebf8856094f1acd597f60ed915881 Mon Sep 17 00:00:00 2001
+From b73bfe205a43602c19649997ac4f23a3e2b3f012 Mon Sep 17 00:00:00 2001
 From: Akihiro Suda <akihiro.suda.cz@hco.ntt.co.jp>
 Date: Wed, 8 Jul 2020 17:50:57 +0900
 Subject: [PATCH 1/2] [moby-snapshot] debrand Docker
@@ -6,12 +6,13 @@ Subject: [PATCH 1/2] [moby-snapshot] debrand Docker
 
 Signed-off-by: Akihiro Suda <akihiro.suda.cz@hco.ntt.co.jp>
 ---
- deb/build-deb                |  2 +-
- deb/common/control           | 48 +++++++++++-------------------------
- deb/common/rules             | 28 ++++++++++-----------
- rpm/SPECS/docker-ce-cli.spec | 20 ++++++---------
- rpm/SPECS/docker-ce.spec     | 21 ++++++----------
- 5 files changed, 44 insertions(+), 75 deletions(-)
+ deb/build-deb                            |  2 +-
+ deb/common/control                       | 65 +++++++++---------------
+ deb/common/rules                         | 38 +++++++-------
+ rpm/SPECS/docker-ce-cli.spec             | 20 +++-----
+ rpm/SPECS/docker-ce-rootless-extras.spec | 15 +++---
+ rpm/SPECS/docker-ce.spec                 | 23 +++------
+ 6 files changed, 67 insertions(+), 96 deletions(-)
 
 diff --git a/deb/build-deb b/deb/build-deb
 index 26801d8..f317b46 100755
@@ -24,7 +25,7 @@ index 26801d8..f317b46 100755
 -mv -v /root/docker* "$destination"
 +mv -v /root/moby* "$destination"
 diff --git a/deb/common/control b/deb/common/control
-index c41afc7..edb1bd8 100644
+index bfd0f25..1c5593a 100644
 --- a/deb/common/control
 +++ b/deb/common/control
 @@ -1,7 +1,7 @@
@@ -37,7 +38,7 @@ index c41afc7..edb1bd8 100644
  Build-Depends: bash,
                 bash-completion,
                 libbtrfs-dev | btrfs-tools,
-@@ -21,13 +21,13 @@ Build-Depends: bash,
+@@ -21,64 +21,47 @@ Build-Depends: bash,
                 make,
                 pkg-config
  Standards-Version: 3.9.6
@@ -56,8 +57,10 @@ index c41afc7..edb1bd8 100644
  Recommends: ca-certificates,
              git,
              pigz,
-@@ -35,32 +35,14 @@ Recommends: ca-certificates,
+             xz-utils,
              libltdl7,
+-            docker-ce-rootless-extras,
++            moby-snapshot-rootless-extras,
              ${apparmor:Recommends}
  Suggests: aufs-tools [amd64], cgroupfs-mount | cgroup-lite
 -Conflicts: docker (<< 1.5~), docker.io, lxc-docker, lxc-docker-virtual-package, docker-engine, docker-engine-cs
@@ -97,8 +100,33 @@ index c41afc7..edb1bd8 100644
 +Replaces: docker-ce-cli
 +Breaks: docker-ce-cli
 +Description: moby-snapshot CLI package
+ 
+-Package: docker-ce-rootless-extras
++Package: moby-snapshot-rootless-extras
+ Architecture: linux-any
+-Depends: docker-ce, ${shlibs:Depends}
+-Conflicts: rootlesskit
+-Replaces: rootlesskit
+-Breaks: rootlesskit
++Depends: moby-snapshot, ${shlibs:Depends}
++Conflicts: rootlesskit, docker-ce-rootless-extras
++Replaces: rootlesskit, docker-ce-rootless-extras
++Breaks: rootlesskit, docker-ce-rootless-extras
+ # slirp4netns (>= 0.4.0) is available in Debian since 11 and Ubuntu since 19.10
+ Recommends: slirp4netns (>= 0.4.0)
+ # Unlike RPM, DEB packages do not contain "Recommends: fuse-overlayfs (>= 0.7.0)" here,
+ # because Debian (since 10) and Ubuntu support the kernel-mode rootless overlayfs.
+-Description: Rootless support for Docker.
++Description: moby-snapshot Rootless Extras package.
+   Use dockerd-rootless.sh to run the daemon.
+   Use dockerd-rootless-setuptool.sh to setup systemd for dockerd-rootless.sh .
+   This package contains RootlessKit, but does not contain VPNKit.
+   Either VPNKit or slirp4netns (>= 0.4.0) needs to be installed separately.
+-Homepage: https://docs.docker.com/engine/security/rootless/
++Homepage: https://github.com/AkihiroSuda/moby-snapshot
++
 diff --git a/deb/common/rules b/deb/common/rules
-index 5d8705f..cf82f83 100755
+index 1e04b5f..e75a983 100755
 --- a/deb/common/rules
 +++ b/deb/common/rules
 @@ -4,7 +4,7 @@ VERSION ?= $(shell cat engine/VERSION)
@@ -110,7 +138,7 @@ index 5d8705f..cf82f83 100755
  	dh_gencontrol
  
  override_dh_auto_build:
-@@ -31,26 +31,26 @@ override_dh_strip:
+@@ -32,33 +32,33 @@ override_dh_strip:
  	# Go has lots of problems with stripping, so just don't
  
  override_dh_auto_install:
@@ -143,13 +171,25 @@ index 5d8705f..cf82f83 100755
 +	install -D -m 0755 /usr/local/bin/docker-proxy debian/moby-snapshot/usr/bin/docker-proxy
 +	install -D -m 0755 /usr/local/bin/docker-init debian/moby-snapshot/usr/bin/docker-init
  
+-	# docker-ce-rootless-extras install
+-	install -D -m 0755 /usr/local/bin/rootlesskit debian/docker-ce-rootless-extras/usr/bin/rootlesskit
+-	install -D -m 0755 /usr/local/bin/rootlesskit-docker-proxy debian/docker-ce-rootless-extras/usr/bin/rootlesskit-docker-proxy
+-	install -D -m 0755 engine/contrib/dockerd-rootless.sh debian/docker-ce-rootless-extras/usr/bin/dockerd-rootless.sh
+-	install -D -m 0755 engine/contrib/dockerd-rootless-setuptool.sh debian/docker-ce-rootless-extras/usr/bin/dockerd-rootless-setuptool.sh
++	# moby-snapshot-rootless-extras install
++	install -D -m 0755 /usr/local/bin/rootlesskit debian/moby-snapshot-rootless-extras/usr/bin/rootlesskit
++	install -D -m 0755 /usr/local/bin/rootlesskit-docker-proxy debian/moby-snapshot-rootless-extras/usr/bin/rootlesskit-docker-proxy
++	install -D -m 0755 engine/contrib/dockerd-rootless.sh debian/moby-snapshot-rootless-extras/usr/bin/dockerd-rootless.sh
++	install -D -m 0755 engine/contrib/dockerd-rootless-setuptool.sh debian/moby-snapshot-rootless-extras/usr/bin/dockerd-rootless-setuptool.sh
+ 	# TODO: how can we install vpnkit?
+ 
  override_dh_installinit:
 -	# use "docker" as our service name, not "docker-ce"
 +	# use "docker" as our service name, not "moby-snapshot"
  	dh_installinit --name=docker
  
  override_dh_shlibdeps:
-@@ -59,7 +59,7 @@ override_dh_shlibdeps:
+@@ -67,7 +67,7 @@ override_dh_shlibdeps:
  override_dh_install:
  	dh_install
  	# TODO Can we do this from within our container?
@@ -204,8 +244,49 @@ index a6959df..8b037db 100644
  
  %prep
  %setup -q -c -n src -a 1
+diff --git a/rpm/SPECS/docker-ce-rootless-extras.spec b/rpm/SPECS/docker-ce-rootless-extras.spec
+index e52cfec..abc4bae 100644
+--- a/rpm/SPECS/docker-ce-rootless-extras.spec
++++ b/rpm/SPECS/docker-ce-rootless-extras.spec
+@@ -1,18 +1,18 @@
+ %global debug_package %{nil}
+ 
+-Name: docker-ce-rootless-extras
++Name: moby-snapshot-rootless-extras
+ Version: %{_version}
+ Release: %{_release}%{?dist}
+ Epoch: 0
+ Source0: engine.tgz
+-Summary: Rootless support for Docker
++Summary: moby-snapshot Rootless Extras package
+ Group: Tools/Docker
+ License: ASL 2.0
+-URL: https://docs.docker.com/engine/security/rootless/
+-Vendor: Docker
+-Packager: Docker <support@docker.com>
++URL: https://github.com/AkihiroSuda/moby-snapshot
++Vendor: Moby
++Packager: Akihiro Suda
+ 
+-Requires: docker-ce
++Requires: moby-snapshot
+ # slirp4netns >= 0.4 is available in the all supported versions of CentOS and Fedora.
+ Requires: slirp4netns >= 0.4
+ # fuse-overlayfs >= 0.7 is available in the all supported versions of CentOS and Fedora.
+@@ -22,9 +22,10 @@ BuildRequires: bash
+ 
+ # conflicting packages
+ Conflicts: rootlesskit
++Conflicts: moby-snapshot-rootless-extras
+ 
+ %description
+-Rootless support for Docker.
++moby-snapshot Rootless Extras package.
+ Use dockerd-rootless.sh to run the daemon.
+ Use dockerd-rootless-setuptool.sh to setup systemd for dockerd-rootless.sh .
+ This package contains RootlessKit, but does not contain VPNKit.
 diff --git a/rpm/SPECS/docker-ce.spec b/rpm/SPECS/docker-ce.spec
-index 7422354..e885b5b 100644
+index 11e8029..341a78c 100644
 --- a/rpm/SPECS/docker-ce.spec
 +++ b/rpm/SPECS/docker-ce.spec
 @@ -3,7 +3,7 @@
@@ -217,7 +298,7 @@ index 7422354..e885b5b 100644
  Version: %{_version}
  Release: %{_release}%{?dist}
  Epoch: 3
-@@ -13,11 +13,11 @@ Source2: docker.socket
+@@ -13,12 +13,12 @@ Source2: docker.socket
  Summary: The open-source application container engine
  Group: Tools/Docker
  License: ASL 2.0
@@ -229,11 +310,13 @@ index 7422354..e885b5b 100644
 +Packager: Akihiro Suda
  
 -Requires: docker-ce-cli
+-Requires: docker-ce-rootless-extras
 +Requires: moby-snapshot-cli
++Requires: moby-snapshot-rootless-extras
  Requires: container-selinux >= 2:2.74
  Requires: libseccomp >= 2.3
  Requires: systemd
-@@ -56,6 +56,7 @@ Conflicts: docker
+@@ -57,6 +57,7 @@ Conflicts: docker
  Conflicts: docker-io
  Conflicts: docker-engine-cs
  Conflicts: docker-ee
@@ -241,7 +324,7 @@ index 7422354..e885b5b 100644
  
  # Obsolete packages
  Obsoletes: docker-ce-selinux
-@@ -63,15 +64,7 @@ Obsoletes: docker-engine-selinux
+@@ -64,15 +65,7 @@ Obsoletes: docker-engine-selinux
  Obsoletes: docker-engine
  
  %description
