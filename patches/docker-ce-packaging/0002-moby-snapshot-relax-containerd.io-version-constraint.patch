@@ -1,4 +1,4 @@
-From f003b4cd90779476594a8fb8a4bfa9f04e5164b2 Mon Sep 17 00:00:00 2001
+From 402aa3ccea4a01384ed893d19636dd8523ace728 Mon Sep 17 00:00:00 2001
 From: Akihiro Suda <akihiro.suda.cz@hco.ntt.co.jp>
 Date: Wed, 8 Jul 2020 19:16:30 +0900
 Subject: [PATCH 2/2] [moby-snapshot] relax containerd.io version constraint
@@ -10,7 +10,7 @@ Signed-off-by: Akihiro Suda <akihiro.suda.cz@hco.ntt.co.jp>
  2 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/deb/common/control b/deb/common/control
-index edb1bd8..490aba4 100644
+index 1c5593a..138b040 100644
 --- a/deb/common/control
 +++ b/deb/common/control
 @@ -27,7 +27,7 @@ Vcs-Git: git://github.com/moby/moby.git
@@ -23,10 +23,10 @@ index edb1bd8..490aba4 100644
              git,
              pigz,
 diff --git a/rpm/SPECS/docker-ce.spec b/rpm/SPECS/docker-ce.spec
-index e885b5b..4382916 100644
+index 341a78c..cfda6d5 100644
 --- a/rpm/SPECS/docker-ce.spec
 +++ b/rpm/SPECS/docker-ce.spec
-@@ -27,7 +27,7 @@ Requires: ( iptables or nftables )
+@@ -28,7 +28,7 @@ Requires: ( iptables or nftables )
  Requires: iptables
  %endif
  Requires: libcgroup
