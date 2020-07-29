@@ -1,5 +1,8 @@
 name: Main
-on: [push, pull_request]
+on:
+  push:
+  schedule:
+    - cron:  '9 20 * * *'
 jobs:
   version:
     name: "Generate _VERSION"
@@ -75,8 +78,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.run_id }}
-        release_name: ${{ github.run_id }}
+        tag_name: $(date +'%d.%m.%Y %R')
+        release_name: $(date +'%d.%m.%Y %R')-${{ github.run_id }}
         body: "Built automatically on GitHub Actions. See the log for the SHA256SUMS. https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         draft: false
     - name: "Upload _VERSION"
