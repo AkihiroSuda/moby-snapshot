@@ -48,9 +48,8 @@ jobs:
         path: ./moby-snapshot-fedora-31-x86_64-rpm.tbz
 
   release:
-    name: "Release (tags: snapshot-*)"
+    name: "Release"
     needs: [version, binary, rpm_fedora_31]
-    if: startsWith(github.ref, 'refs/tags/snapshot-')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
