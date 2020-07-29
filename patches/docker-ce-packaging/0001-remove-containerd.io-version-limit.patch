@@ -1,0 +1,26 @@
+From 1492ccfc5909533a6ffbc270b5b8890593fd0240 Mon Sep 17 00:00:00 2001
+From: Jintao Zhang <zhangjintao9020@gmail.com>
+Date: Wed, 29 Jul 2020 15:51:22 +0800
+Subject: [PATCH] remove containerd.io version limit
+
+Signed-off-by: Jintao Zhang <zhangjintao9020@gmail.com>
+---
+ rpm/SPECS/docker-ce.spec | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/rpm/SPECS/docker-ce.spec b/rpm/SPECS/docker-ce.spec
+index 810854336a..5b7adf9cd5 100644
+--- a/rpm/SPECS/docker-ce.spec
++++ b/rpm/SPECS/docker-ce.spec
+@@ -29,7 +29,7 @@ Requires: ( iptables or nftables )
+ Requires: iptables
+ %endif
+ Requires: libcgroup
+-Requires: containerd.io >= 1.2.2-3
++Requires: containerd.io
+ Requires: tar
+ Requires: xz
+ 
+-- 
+2.25.4
+
