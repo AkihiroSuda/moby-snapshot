@@ -1,4 +1,4 @@
-From b73bfe205a43602c19649997ac4f23a3e2b3f012 Mon Sep 17 00:00:00 2001
+From 4cf51e396d1dc3e3e0770a68ff9ff1118794541e Mon Sep 17 00:00:00 2001
 From: Akihiro Suda <akihiro.suda.cz@hco.ntt.co.jp>
 Date: Wed, 8 Jul 2020 17:50:57 +0900
 Subject: [PATCH 1/2] [moby-snapshot] debrand Docker
@@ -8,11 +8,11 @@ Signed-off-by: Akihiro Suda <akihiro.suda.cz@hco.ntt.co.jp>
 ---
  deb/build-deb                            |  2 +-
  deb/common/control                       | 65 +++++++++---------------
- deb/common/rules                         | 38 +++++++-------
+ deb/common/rules                         | 36 ++++++-------
  rpm/SPECS/docker-ce-cli.spec             | 20 +++-----
  rpm/SPECS/docker-ce-rootless-extras.spec | 15 +++---
  rpm/SPECS/docker-ce.spec                 | 23 +++------
- 6 files changed, 67 insertions(+), 96 deletions(-)
+ 6 files changed, 66 insertions(+), 95 deletions(-)
 
 diff --git a/deb/build-deb b/deb/build-deb
 index 26801d8..f317b46 100755
@@ -25,7 +25,7 @@ index 26801d8..f317b46 100755
 -mv -v /root/docker* "$destination"
 +mv -v /root/moby* "$destination"
 diff --git a/deb/common/control b/deb/common/control
-index bfd0f25..1c5593a 100644
+index 70aeff2..b7d2d18 100644
 --- a/deb/common/control
 +++ b/deb/common/control
 @@ -1,7 +1,7 @@
@@ -61,7 +61,7 @@ index bfd0f25..1c5593a 100644
              libltdl7,
 -            docker-ce-rootless-extras,
 +            moby-snapshot-rootless-extras,
-             ${apparmor:Recommends}
+             apparmor
  Suggests: aufs-tools [amd64], cgroupfs-mount | cgroup-lite
 -Conflicts: docker (<< 1.5~), docker.io, lxc-docker, lxc-docker-virtual-package, docker-engine, docker-engine-cs
 -Replaces: docker-engine
@@ -126,19 +126,10 @@ index bfd0f25..1c5593a 100644
 +Homepage: https://github.com/AkihiroSuda/moby-snapshot
 +
 diff --git a/deb/common/rules b/deb/common/rules
-index 1e04b5f..e75a983 100755
+index 5e10188..81ec263 100755
 --- a/deb/common/rules
 +++ b/deb/common/rules
-@@ -4,7 +4,7 @@ VERSION ?= $(shell cat engine/VERSION)
- 
- override_dh_gencontrol:
- 	# if we're on Ubuntu, we need to Recommends: apparmor
--	echo 'apparmor:Recommends=$(shell dpkg-vendor --is Ubuntu && echo apparmor)' >> debian/docker-ce.substvars
-+	echo 'apparmor:Recommends=$(shell dpkg-vendor --is Ubuntu && echo apparmor)' >> debian/moby-snapshot.substvars
- 	dh_gencontrol
- 
- override_dh_auto_build:
-@@ -32,33 +32,33 @@ override_dh_strip:
+@@ -27,33 +27,33 @@ override_dh_strip:
  	# Go has lots of problems with stripping, so just don't
  
  override_dh_auto_install:
@@ -189,7 +180,7 @@ index 1e04b5f..e75a983 100755
  	dh_installinit --name=docker
  
  override_dh_shlibdeps:
-@@ -67,7 +67,7 @@ override_dh_shlibdeps:
+@@ -62,7 +62,7 @@ override_dh_shlibdeps:
  override_dh_install:
  	dh_install
  	# TODO Can we do this from within our container?
@@ -199,7 +190,7 @@ index 1e04b5f..e75a983 100755
  %:
  	dh $@ --with=bash-completion $(shell command -v dh_systemd_enable > /dev/null 2>&1 && echo --with=systemd)
 diff --git a/rpm/SPECS/docker-ce-cli.spec b/rpm/SPECS/docker-ce-cli.spec
-index a6959df..8b037db 100644
+index 7209b87..8b493a6 100644
 --- a/rpm/SPECS/docker-ce-cli.spec
 +++ b/rpm/SPECS/docker-ce-cli.spec
 @@ -1,6 +1,6 @@
@@ -223,7 +214,7 @@ index a6959df..8b037db 100644
  
  # required packages on install
  Requires: /bin/sh
-@@ -26,17 +26,11 @@ Conflicts: docker-io
+@@ -27,17 +27,11 @@ Conflicts: docker-io
  Conflicts: docker-engine-cs
  Conflicts: docker-ee
  Conflicts: docker-ee-cli
@@ -286,7 +277,7 @@ index e52cfec..abc4bae 100644
  Use dockerd-rootless-setuptool.sh to setup systemd for dockerd-rootless.sh .
  This package contains RootlessKit, but does not contain VPNKit.
 diff --git a/rpm/SPECS/docker-ce.spec b/rpm/SPECS/docker-ce.spec
-index 11e8029..341a78c 100644
+index 8108543..0b6134a 100644
 --- a/rpm/SPECS/docker-ce.spec
 +++ b/rpm/SPECS/docker-ce.spec
 @@ -3,7 +3,7 @@
@@ -298,7 +289,7 @@ index 11e8029..341a78c 100644
  Version: %{_version}
  Release: %{_release}%{?dist}
  Epoch: 3
-@@ -13,12 +13,12 @@ Source2: docker.socket
+@@ -13,13 +13,13 @@ Source2: docker.socket
  Summary: The open-source application container engine
  Group: Tools/Docker
  License: ASL 2.0
@@ -309,6 +300,7 @@ index 11e8029..341a78c 100644
 +Vendor: Moby
 +Packager: Akihiro Suda
  
+ Requires: /usr/sbin/groupadd
 -Requires: docker-ce-cli
 -Requires: docker-ce-rootless-extras
 +Requires: moby-snapshot-cli
@@ -316,7 +308,7 @@ index 11e8029..341a78c 100644
  Requires: container-selinux >= 2:2.74
  Requires: libseccomp >= 2.3
  Requires: systemd
-@@ -57,6 +57,7 @@ Conflicts: docker
+@@ -58,6 +58,7 @@ Conflicts: docker
  Conflicts: docker-io
  Conflicts: docker-engine-cs
  Conflicts: docker-ee
@@ -324,7 +316,7 @@ index 11e8029..341a78c 100644
  
  # Obsolete packages
  Obsoletes: docker-ce-selinux
-@@ -64,15 +65,7 @@ Obsoletes: docker-engine-selinux
+@@ -65,15 +66,7 @@ Obsoletes: docker-engine-selinux
  Obsoletes: docker-engine
  
  %description
