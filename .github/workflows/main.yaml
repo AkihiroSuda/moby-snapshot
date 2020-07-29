@@ -72,14 +72,16 @@ jobs:
       run: |
         cd _tmp
         sha256sum *
+    - name: "Set env"
+      run: echo "::set-env name=NOW::v$(date +'%Y%m%d.%H%M')"
     - name: "Create release"
       uses: actions/create-release@v1
       id: create_release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: $(date +'%d.%m.%Y %R')
-        release_name: $(date +'%d.%m.%Y %R')-${{ github.run_id }}
+        tag_name: ${{ env.NOW }} 
+        release_name: ${{ env.NOW }}-${{ github.run_id }}
         body: "Built automatically on GitHub Actions. See the log for the SHA256SUMS. https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         draft: false
     - name: "Upload _VERSION"
