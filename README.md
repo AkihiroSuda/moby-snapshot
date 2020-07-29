@@ -1,10 +1,16 @@
+# Fork from https://github.com/AkihiroSuda/moby-snapshot
+
+Thanks to AkihiroSuda.
+
+Change to build for Fedora31. 
+
 # Binary snapshots of [Moby](https://github.com/moby/moby)
 
 Binary snapshots of [Moby](https://github.com/moby/moby) with containerd and runc.
 Irregularly updated.
 
 ## Download
-[Here](https://github.com/AkihiroSuda/moby-snapshot/releases)
+[Here](https://github.com/nightly-build/moby-snapshot/releases)
 
 ## Usage
 
@@ -31,20 +37,8 @@ $ sudo cp ./moby-snapshot-x86_64/bin/* /usr/local/bin
 $ sudo dockerd
 ```
 
-### deb
-Available for Ubuntu 20.04 (Focal Fossa)
-
-```console
-$ tar xjvf moby-snapshot-ubuntu-focal-x86_64-deb.tbz 
-containerd.io_0.20200717.014906~4feb8c4-1_amd64.deb
-moby-snapshot-cli_0.0.0-20200716165816-bece8cc41c-0~ubuntu-focal_amd64.deb
-moby-snapshot-rootless-extras_0.0.0-20200716165816-bece8cc41c-0~ubuntu-focal_amd64.deb
-moby-snapshot_0.0.0-20200716165816-bece8cc41c-0~ubuntu-focal_amd64.deb
-$ sudo apt-get install ./*.deb
-```
-
 ### rpm
-Available for Fedora 32 and CentOS 8
+Available for Fedora 31
 
 ```console
 $ tar xjvf moby-snapshot-fedora-32-x86_64-rpm.tbz 
