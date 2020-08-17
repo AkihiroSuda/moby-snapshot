@@ -21,7 +21,7 @@ $(x DOCKER_ENGINE moby/moby "Docker Engine (Moby)")
 $(x DOCKER_CLI docker/cli "Docker CLI")
 $(x CONTAINERD_PACKAGING docker/containerd-packaging "RPM/DEB specs for containerd")
 # RPM/DEB specs for Docker
-DOCKER_CE_PACKAGING_REF=5a7d3cd145182a9f9e9598a9851f793a34c2543f
+DOCKER_CE_PACKAGING_REF=5496ae015bfeeb2e5eafce3824b2f432471c018a
 EOF
 # DOCKER_CE_PACKAGING_REF is hard-coded because we have patches
 
