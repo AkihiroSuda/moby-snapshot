@@ -1,4 +1,4 @@
-From 4cf51e396d1dc3e3e0770a68ff9ff1118794541e Mon Sep 17 00:00:00 2001
+From 66a35e34929685cde3ec159fe9c8d35d96196b45 Mon Sep 17 00:00:00 2001
 From: Akihiro Suda <akihiro.suda.cz@hco.ntt.co.jp>
 Date: Wed, 8 Jul 2020 17:50:57 +0900
 Subject: [PATCH 1/2] [moby-snapshot] debrand Docker
@@ -7,12 +7,12 @@ Subject: [PATCH 1/2] [moby-snapshot] debrand Docker
 Signed-off-by: Akihiro Suda <akihiro.suda.cz@hco.ntt.co.jp>
 ---
  deb/build-deb                            |  2 +-
- deb/common/control                       | 65 +++++++++---------------
- deb/common/rules                         | 36 ++++++-------
- rpm/SPECS/docker-ce-cli.spec             | 20 +++-----
- rpm/SPECS/docker-ce-rootless-extras.spec | 15 +++---
- rpm/SPECS/docker-ce.spec                 | 23 +++------
- 6 files changed, 66 insertions(+), 95 deletions(-)
+ deb/common/control                       | 70 +++++++++++-------------
+ deb/common/rules                         | 36 ++++++------
+ rpm/SPECS/docker-ce-cli.spec             | 20 +++----
+ rpm/SPECS/docker-ce-rootless-extras.spec | 15 ++---
+ rpm/SPECS/docker-ce.spec                 | 23 +++-----
+ 6 files changed, 73 insertions(+), 93 deletions(-)
 
 diff --git a/deb/build-deb b/deb/build-deb
 index 26801d8..f317b46 100755
@@ -25,7 +25,7 @@ index 26801d8..f317b46 100755
 -mv -v /root/docker* "$destination"
 +mv -v /root/moby* "$destination"
 diff --git a/deb/common/control b/deb/common/control
-index 70aeff2..b7d2d18 100644
+index 1a50ef9..95f7bcc 100644
 --- a/deb/common/control
 +++ b/deb/common/control
 @@ -1,7 +1,7 @@
@@ -37,8 +37,8 @@ index 70aeff2..b7d2d18 100644
 +Maintainer: Akihiro Suda
  Build-Depends: bash,
                 bash-completion,
-                libbtrfs-dev | btrfs-tools,
-@@ -21,64 +21,47 @@ Build-Depends: bash,
+                ca-certificates,
+@@ -21,20 +21,20 @@ Build-Depends: bash,
                 make,
                 pkg-config
  Standards-Version: 3.9.6
@@ -52,18 +52,26 @@ index 70aeff2..b7d2d18 100644
 -Package: docker-ce
 +Package: moby-snapshot
  Architecture: linux-any
--Depends: docker-ce-cli, containerd.io (>= 1.2.2-3), iptables, libseccomp2 (>= 2.3.0), ${shlibs:Depends}
-+Depends: moby-snapshot-cli, containerd.io (>= 1.2.2-3), iptables, libseccomp2 (>= 2.3.0), ${shlibs:Depends}
- Recommends: ca-certificates,
-             git,
-             pigz,
-             xz-utils,
-             libltdl7,
+ Depends: containerd.io (>= 1.2.2-3),
+-         docker-ce-cli,
++         moby-snapshot-cli,
+          iptables,
+          libseccomp2 (>= 2.3.0),
+          ${shlibs:Depends}
+ Recommends: apparmor,
+             ca-certificates,
 -            docker-ce-rootless-extras,
 +            moby-snapshot-rootless-extras,
-             apparmor
- Suggests: aufs-tools [amd64], cgroupfs-mount | cgroup-lite
--Conflicts: docker (<< 1.5~), docker.io, lxc-docker, lxc-docker-virtual-package, docker-engine, docker-engine-cs
+             git,
+             libltdl7,
+             pigz,
+@@ -44,55 +44,47 @@ Conflicts: docker (<< 1.5~),
+            docker-engine,
+            docker-engine-cs,
+            docker.io,
++           docker-ce,
+            lxc-docker,
+            lxc-docker-virtual-package
 -Replaces: docker-engine
 -Description: Docker: the open-source application container engine
 - Docker is a product for you to build, ship and run any application as a
@@ -75,15 +83,22 @@ index 70aeff2..b7d2d18 100644
 - language, framework or packaging system. That makes them great building blocks
 - for deploying and scaling web apps, databases, and backend services without
 - depending on a particular stack or provider.
-+Conflicts: docker (<< 1.5~), docker.io, lxc-docker, lxc-docker-virtual-package, docker-engine, docker-engine-cs, docker-ce
-+Replaces: docker-engine, docker-ce
++Replaces: docker-engine,
++          docker-ce
++Breaks: docker-ce
 +Description: moby-snapshot runtime package
  
 -Package: docker-ce-cli
 +Package: moby-snapshot-cli
  Architecture: linux-any
  Depends: ${shlibs:Depends}
--Conflicts: docker (<< 1.5~), docker.io, lxc-docker, lxc-docker-virtual-package, docker-engine, docker-engine-cs
+ Conflicts: docker (<< 1.5~),
+            docker-engine,
+            docker-engine-cs,
+            docker.io,
++           docker-ce-cli,
+            lxc-docker,
+            lxc-docker-virtual-package
 -Replaces: docker-ce (<< 5:0)
 -Breaks: docker-ce (<< 5:0)
 -Description: Docker CLI: the open-source application container engine
@@ -96,9 +111,10 @@ index 70aeff2..b7d2d18 100644
 - language, framework or packaging system. That makes them great building blocks
 - for deploying and scaling web apps, databases, and backend services without
 - depending on a particular stack or provider.
-+Conflicts: docker (<< 1.5~), docker.io, lxc-docker, lxc-docker-virtual-package, docker-engine, docker-engine-cs, docker-ce-cli
-+Replaces: docker-ce-cli
-+Breaks: docker-ce-cli
++Replaces: docker-ce (<< 5:0),
++          docker-ce-cli
++Breaks: docker-ce (<< 5:0),
++        docker-ce-cli
 +Description: moby-snapshot CLI package
  
 -Package: docker-ce-rootless-extras
@@ -109,9 +125,12 @@ index 70aeff2..b7d2d18 100644
 -Replaces: rootlesskit
 -Breaks: rootlesskit
 +Depends: moby-snapshot, ${shlibs:Depends}
-+Conflicts: rootlesskit, docker-ce-rootless-extras
-+Replaces: rootlesskit, docker-ce-rootless-extras
-+Breaks: rootlesskit, docker-ce-rootless-extras
++Conflicts: rootlesskit,
++           docker-ce-rootless-extras
++Replaces: rootlesskit,
++          docker-ce-rootless-extras
++Breaks: rootlesskit,
++        docker-ce-rootless-extras
  # slirp4netns (>= 0.4.0) is available in Debian since 11 and Ubuntu since 19.10
  Recommends: slirp4netns (>= 0.4.0)
  # Unlike RPM, DEB packages do not contain "Recommends: fuse-overlayfs (>= 0.7.0)" here,
