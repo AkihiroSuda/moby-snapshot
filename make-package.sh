@@ -31,6 +31,7 @@ mkdir -p $artifact _gopath/src/github.com/docker
 	git clone https://github.com/docker/docker-ce-packaging.git
 	(
 		cd docker-ce-packaging
+    git checkout $DOCKER_CE_PACKAGING_REF
 		for f in $base/patches/docker-ce-packaging/*.patch; do
 			patch -p1 <$f
 		done
