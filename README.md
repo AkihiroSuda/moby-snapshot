@@ -32,7 +32,8 @@ $ sudo dockerd
 ```
 
 ### deb
-Available for Ubuntu 20.04 (Focal Fossa)
+- Ubuntu 20.04 (Focal Fossa)
+- Ubuntu 20.10 (Groovy Gorilla)
 
 ```console
 $ tar xjvf moby-snapshot-ubuntu-focal-x86_64-deb.tbz 
@@ -44,7 +45,8 @@ $ sudo apt-get install ./*.deb
 ```
 
 ### rpm
-Available for Fedora 32 and CentOS 8
+- CentOS 8
+- Fedora 33
 
 ```console
 $ tar xjvf moby-snapshot-fedora-32-x86_64-rpm.tbz 

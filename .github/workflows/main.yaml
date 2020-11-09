@@ -46,8 +46,8 @@ jobs:
       with:
         name: moby-snapshot-ubuntu-focal-x86_64-deb.tbz
         path: ./moby-snapshot-ubuntu-focal-x86_64-deb.tbz
-  rpm_fedora_32:
-    name: "Build rpm (Fedora 32)"
+  deb_ubuntu_groovy:
+    name: "Build deb (Ubuntu 20.10 Groovy)"
     needs: version
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -58,11 +58,28 @@ jobs:
         name: _VERSION
         path: _tmp
     - run: mv _tmp/_VERSION _VERSION
-    - run: ./make-package.sh fedora 32
+    - run: ./make-package.sh ubuntu groovy
     - uses: actions/upload-artifact@v2
       with:
-        name: moby-snapshot-fedora-32-x86_64-rpm.tbz
-        path: ./moby-snapshot-fedora-32-x86_64-rpm.tbz
+        name: moby-snapshot-ubuntu-groovy-x86_64-deb.tbz
+        path: ./moby-snapshot-ubuntu-groovy-x86_64-deb.tbz
+  rpm_fedora_33:
+    name: "Build rpm (Fedora 33)"
+    needs: version
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/download-artifact@v2
+      with:
+        name: _VERSION
+        path: _tmp
+    - run: mv _tmp/_VERSION _VERSION
+    - run: ./make-package.sh fedora 33
+    - uses: actions/upload-artifact@v2
+      with:
+        name: moby-snapshot-fedora-33-x86_64-rpm.tbz
+        path: ./moby-snapshot-fedora-33-x86_64-rpm.tbz
   rpm_centos_8:
     name: "Build rpm (CentOS 8)"
     needs: version
@@ -83,7 +100,7 @@ jobs:
 
   release:
     name: "Release (tags: snapshot-*)"
-    needs: [version, binary, deb_ubuntu_focal, rpm_fedora_32, rpm_centos_8]
+    needs: [version, binary, deb_ubuntu_focal, rpm_fedora_33, rpm_centos_8]
     if: startsWith(github.ref, 'refs/tags/snapshot-')
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -102,7 +119,11 @@ jobs:
         path: _tmp
     - uses: actions/download-artifact@v2
       with:
-        name: moby-snapshot-fedora-32-x86_64-rpm.tbz
+        name: moby-snapshot-ubuntu-groovy-x86_64-deb.tbz
+        path: _tmp
+    - uses: actions/download-artifact@v2
+      with:
+        name: moby-snapshot-fedora-33-x86_64-rpm.tbz
         path: _tmp
     - uses: actions/download-artifact@v2
       with:
@@ -149,14 +170,23 @@ jobs:
         asset_path: _tmp/moby-snapshot-ubuntu-focal-x86_64-deb.tbz
         asset_name: moby-snapshot-ubuntu-focal-x86_64-deb.tbz
         asset_content_type: application/octet-stream
-    - name: "Upload moby-snapshot-fedora-32-x86_64-rpm.tbz"
+    - name: "Upload moby-snapshot-ubuntu-groovy-x86_64-deb.tbz"
       uses: actions/upload-release-asset@v1.0.2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: _tmp/moby-snapshot-fedora-32-x86_64-rpm.tbz
-        asset_name: moby-snapshot-fedora-32-x86_64-rpm.tbz
+        asset_path: _tmp/moby-snapshot-ubuntu-groovy-x86_64-deb.tbz
+        asset_name: moby-snapshot-ubuntu-groovy-x86_64-deb.tbz
+        asset_content_type: application/octet-stream
+    - name: "Upload moby-snapshot-fedora-33-x86_64-rpm.tbz"
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: _tmp/moby-snapshot-fedora-33-x86_64-rpm.tbz
+        asset_name: moby-snapshot-fedora-33-x86_64-rpm.tbz
         asset_content_type: application/octet-stream
     - name: "Upload moby-snapshot-centos-8-x86_64-rpm.tbz"
       uses: actions/upload-release-asset@v1.0.2
