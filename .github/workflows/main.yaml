@@ -94,7 +94,7 @@ jobs:
         cd _tmp
         sha256sum *
     - name: "Set env"
-      run: echo "::set-env name=NOW::v$(date +'%Y%m%d.%H%M')"
+      run: echo "NOW=v$(date +'%Y%m%d.%H%M')" >> $GITHUB_ENV
     - name: "Create release"
       uses: actions/create-release@v1
       id: create_release
