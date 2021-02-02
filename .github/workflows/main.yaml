@@ -141,7 +141,7 @@ jobs:
       with:
         tag_name: ${{ github.ref }}
         release_name: ${{ github.ref }}
-        body: "Built automatically on GitHub Actions. See the log for the SHA256SUMS. https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        body: "Built automatically on GitHub Actions. See the log for the SHA256SUMS. https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }} (Available for 90 days)"
         draft: false
     - name: "Upload _VERSION"
       uses: actions/upload-release-asset@v1.0.2
