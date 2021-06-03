@@ -36,8 +36,10 @@ mkdir -p $artifact _gopath/src/github.com/docker
 		done
 		make DOCKER_ENGINE_REF=$DOCKER_ENGINE_REF DOCKER_CLI_REF=$DOCKER_CLI_REF PLATFORM="Moby Engine" checkout
 		make -C $type DOCKER_ENGINE_REF=$DOCKER_ENGINE_REF DOCKER_CLI_REF=$DOCKER_CLI_REF PLATFORM="Moby Engine" "${distro}-${version}"
+        ls -al 
+        ls -al **/*
 		if [[ "$type" = "rpm" ]]; then
-			mv rpm/rpmbuild/RPMS/$(uname -m)/*.rpm $artifact
+			mv rpm/rpmbuild/*/RPMS/*.rpm $artifact
 		else
 			mv deb/debbuild/${distro}-${version}/*.deb $artifact
 		fi

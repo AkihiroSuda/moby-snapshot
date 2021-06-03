@@ -2,7 +2,7 @@ name: Main
 on:
   push:
   schedule:
-    - cron:  '9 20 * * *'
+    - cron:  '9 20 * * 1,5'
 jobs:
   version:
     name: "Generate _VERSION"
@@ -32,8 +32,8 @@ jobs:
       with:
         name: moby-snapshot-x86_64.tbz
         path: ./moby-snapshot-x86_64.tbz
-  rpm_fedora_32:
-    name: "Build rpm (Fedora 32)"
+  rpm_fedora_34:
+    name: "Build rpm (Fedora 34)"
     needs: version
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -44,11 +44,11 @@ jobs:
         name: _VERSION
         path: _tmp
     - run: mv _tmp/_VERSION _VERSION
-    - run: ./make-package.sh fedora 32
+    - run: ./make-package.sh fedora 34
     - uses: actions/upload-artifact@v2
       with:
-        name: moby-snapshot-fedora-32-x86_64-rpm.tbz
-        path: ./moby-snapshot-fedora-32-x86_64-rpm.tbz
+        name: moby-snapshot-fedora-34-x86_64-rpm.tbz
+        path: ./moby-snapshot-fedora-34-x86_64-rpm.tbz
   rpm_centos_8:
     name: "Build rpm (CentOS 8)"
     needs: version
@@ -69,7 +69,7 @@ jobs:
 
   release:
     name: "Release"
-    needs: [version, binary, rpm_fedora_32, rpm_centos_8]
+    needs: [version, binary, rpm_fedora_34, rpm_centos_8]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -83,7 +83,7 @@ jobs:
         path: _tmp
     - uses: actions/download-artifact@v2
       with:
-        name: moby-snapshot-fedora-32-x86_64-rpm.tbz
+        name: moby-snapshot-fedora-34-x86_64-rpm.tbz
         path: _tmp
     - uses: actions/download-artifact@v2
       with:
@@ -123,14 +123,14 @@ jobs:
         asset_path: _tmp/moby-snapshot-x86_64.tbz
         asset_name: moby-snapshot-x86_64.tbz
         asset_content_type: application/octet-stream
-    - name: "Upload moby-snapshot-fedora-32-x86_64-rpm.tbz"
+    - name: "Upload moby-snapshot-fedora-34-x86_64-rpm.tbz"
       uses: actions/upload-release-asset@v1.0.2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: _tmp/moby-snapshot-fedora-32-x86_64-rpm.tbz
-        asset_name: moby-snapshot-fedora-32-x86_64-rpm.tbz
+        asset_path: _tmp/moby-snapshot-fedora-34-x86_64-rpm.tbz
+        asset_name: moby-snapshot-fedora-34-x86_64-rpm.tbz
         asset_content_type: application/octet-stream
     - name: "Upload moby-snapshot-centos-8-x86_64-rpm.tbz"
       uses: actions/upload-release-asset@v1.0.2
