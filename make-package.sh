@@ -35,8 +35,8 @@ mkdir -p $artifact _gopath/src/github.com/docker
 		for f in $base/patches/docker-ce-packaging/*.patch; do
 			patch -p1 <$f
 		done
-		make DOCKER_ENGINE_REF=$DOCKER_ENGINE_REF DOCKER_CLI_REF=$DOCKER_CLI_REF PLATFORM="Moby Engine" checkout
-		make -C $type DOCKER_ENGINE_REF=$DOCKER_ENGINE_REF DOCKER_CLI_REF=$DOCKER_CLI_REF PLATFORM="Moby Engine" "${distro}-${version}"
+		make DOCKER_ENGINE_REF=$DOCKER_ENGINE_REF DOCKER_CLI_REF=$DOCKER_CLI_REF DOCKER_SCAN_REF=$DOCKER_SCAN_REF PLATFORM="Moby Engine" checkout
+		make -C $type DOCKER_ENGINE_REF=$DOCKER_ENGINE_REF DOCKER_CLI_REF=$DOCKER_CLI_REF DOCKER_SCAN_REF=$DOCKER_SCAN_REF PLATFORM="Moby Engine" "${distro}-${version}"
 		if [[ "$type" = "rpm" ]]; then
 			mv rpm/rpmbuild/RPMS/$(uname -m)/*.rpm $artifact
 		else

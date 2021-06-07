@@ -1,4 +1,4 @@
-From 16b84a35a050274f3233569cb7ddfbcfa345951a Mon Sep 17 00:00:00 2001
+From ccaf044449ecd811dd3ae646eb40354cf9b7ecfe Mon Sep 17 00:00:00 2001
 From: Akihiro Suda <akihiro.suda.cz@hco.ntt.co.jp>
 Date: Wed, 8 Jul 2020 17:50:57 +0900
 Subject: [PATCH 1/2] [moby-snapshot] debrand Docker
@@ -7,25 +7,26 @@ Subject: [PATCH 1/2] [moby-snapshot] debrand Docker
 Signed-off-by: Akihiro Suda <akihiro.suda.cz@hco.ntt.co.jp>
 ---
  deb/build-deb                            |  2 +-
- deb/common/control                       | 70 +++++++++++-------------
- deb/common/rules                         | 36 ++++++------
+ deb/common/control                       | 76 +++++++++++-------------
+ deb/common/rules                         | 40 ++++++-------
  rpm/SPECS/docker-ce-cli.spec             | 20 +++----
  rpm/SPECS/docker-ce-rootless-extras.spec | 15 ++---
- rpm/SPECS/docker-ce.spec                 | 23 +++-----
- 6 files changed, 73 insertions(+), 93 deletions(-)
+ rpm/SPECS/docker-ce.spec                 | 23 +++----
+ rpm/SPECS/docker-scan-plugin.spec        |  6 +-
+ 7 files changed, 82 insertions(+), 100 deletions(-)
 
 diff --git a/deb/build-deb b/deb/build-deb
-index 26801d8..f317b46 100755
+index c960b95..201f987 100755
 --- a/deb/build-deb
 +++ b/deb/build-deb
-@@ -49,4 +49,4 @@ echo VERSION BBB $VERSION
+@@ -55,4 +55,4 @@ echo VERSION BBB $VERSION
  dpkg-buildpackage -uc -us -I.git
  destination="/build"
  mkdir -p "$destination"
 -mv -v /root/docker* "$destination"
 +mv -v /root/moby* "$destination"
 diff --git a/deb/common/control b/deb/common/control
-index 55ae518..172f35c 100644
+index 7347fa2..412e560 100644
 --- a/deb/common/control
 +++ b/deb/common/control
 @@ -1,7 +1,7 @@
@@ -65,7 +66,7 @@ index 55ae518..172f35c 100644
              git,
              libltdl7,
              pigz,
-@@ -44,55 +44,47 @@ Conflicts: docker (<< 1.5~),
+@@ -45,66 +45,60 @@ Conflicts: docker (<< 1.5~),
             docker-engine,
             docker-engine-cs,
             docker.io,
@@ -92,6 +93,9 @@ index 55ae518..172f35c 100644
 +Package: moby-snapshot-cli
  Architecture: linux-any
  Depends: ${shlibs:Depends}
+ # TODO change once we support scan-plugin on other architectures
+-Recommends: docker-scan-plugin [amd64]
++Recommends: moby-snapshot-cli-plugin [amd64]
  Conflicts: docker (<< 1.5~),
             docker-engine,
             docker-engine-cs,
@@ -120,11 +124,12 @@ index 55ae518..172f35c 100644
 -Package: docker-ce-rootless-extras
 +Package: moby-snapshot-rootless-extras
  Architecture: linux-any
--Depends: docker-ce, ${shlibs:Depends}
+ Depends: ${shlibs:Depends}
+-Enhances: docker-ce
 -Conflicts: rootlesskit
 -Replaces: rootlesskit
 -Breaks: rootlesskit
-+Depends: moby-snapshot, ${shlibs:Depends}
++Enhances: moby-snapshot
 +Conflicts: rootlesskit,
 +           docker-ce-rootless-extras
 +Replaces: rootlesskit,
@@ -141,25 +146,36 @@ index 55ae518..172f35c 100644
    Use dockerd-rootless-setuptool.sh to setup systemd for dockerd-rootless.sh .
    This package contains RootlessKit, but does not contain VPNKit.
    Either VPNKit or slirp4netns (>= 0.4.0) needs to be installed separately.
--Homepage: https://docs.docker.com/engine/security/rootless/
-+Homepage: https://github.com/AkihiroSuda/moby-snapshot
-+
+ Homepage: https://docs.docker.com/engine/security/rootless/
+ 
+-Package: docker-scan-plugin
++Package: moby-snapshot-cli-scan-plugin
+ Priority: optional
+ # TODO change once we support scan-plugin on other architectures (see dpkg-architecture -L)
+ Architecture: linux-amd64
+-Enhances: docker-ce-cli
++Enhances: moby-snapshot-cli
++Conflicts: docker-scan-plugin
++Replaces: docker-scan-plugin
++Breaks: docker-scan-plugin
+ Description: Docker scan cli plugin.
+ Homepage: https://github.com/docker/scan-cli-plugin
 diff --git a/deb/common/rules b/deb/common/rules
-index 5e10188..81ec263 100755
+index ecfbc16..004eaa1 100755
 --- a/deb/common/rules
 +++ b/deb/common/rules
-@@ -27,33 +27,33 @@ override_dh_strip:
+@@ -37,39 +37,39 @@ override_dh_strip:
  	# Go has lots of problems with stripping, so just don't
  
  override_dh_auto_install:
 -	# docker-ce-cli install
--	install -D -m 0644 /go/src/github.com/docker/cli/contrib/completion/fish/docker.fish debian/docker-ce-cli/usr/share/fish/vendor_completions.d/docker.fish
--	install -D -m 0644 /go/src/github.com/docker/cli/contrib/completion/zsh/_docker debian/docker-ce-cli/usr/share/zsh/vendor-completions/_docker
--	install -D -m 0755 /go/src/github.com/docker/cli/build/docker debian/docker-ce-cli/usr/bin/docker
+-	install -D -m 0644 cli/contrib/completion/fish/docker.fish debian/docker-ce-cli/usr/share/fish/vendor_completions.d/docker.fish
+-	install -D -m 0644 cli/contrib/completion/zsh/_docker debian/docker-ce-cli/usr/share/zsh/vendor-completions/_docker
+-	install -D -m 0755 cli/build/docker debian/docker-ce-cli/usr/bin/docker
 +	# moby-snapshot-cli install
-+	install -D -m 0644 /go/src/github.com/docker/cli/contrib/completion/fish/docker.fish debian/moby-snapshot-cli/usr/share/fish/vendor_completions.d/docker.fish
-+	install -D -m 0644 /go/src/github.com/docker/cli/contrib/completion/zsh/_docker debian/moby-snapshot-cli/usr/share/zsh/vendor-completions/_docker
-+	install -D -m 0755 /go/src/github.com/docker/cli/build/docker debian/moby-snapshot-cli/usr/bin/docker
++	install -D -m 0644 cli/contrib/completion/fish/docker.fish debian/moby-snapshot-cli/usr/share/fish/vendor_completions.d/docker.fish
++	install -D -m 0644 cli/contrib/completion/zsh/_docker debian/moby-snapshot-cli/usr/share/zsh/vendor-completions/_docker
++	install -D -m 0755 cli/build/docker debian/moby-snapshot-cli/usr/bin/docker
  	set -e;cd /sources && \
  		tar xzf plugin-installers.tgz; \
  		for installer in plugins/*.installer; do \
@@ -169,24 +185,31 @@ index 5e10188..81ec263 100755
  				bash $${installer} install_plugin; \
  		done
 -	# docker-ce install
--	install -D -m 0644 /sources/docker.service debian/docker-ce/lib/systemd/system/docker.service
--	install -D -m 0644 /sources/docker.socket debian/docker-ce/lib/systemd/system/docker.socket
+-	install -D -m 0644 engine/contrib/init/systemd/docker.service debian/docker-ce/lib/systemd/system/docker.service
+-	install -D -m 0644 engine/contrib/init/systemd/docker.socket debian/docker-ce/lib/systemd/system/docker.socket
 -	install -D -m 0755 $(shell readlink -e engine/bundles/dynbinary-daemon/dockerd) debian/docker-ce/usr/bin/dockerd
 -	install -D -m 0755 /usr/local/bin/docker-proxy debian/docker-ce/usr/bin/docker-proxy
 -	install -D -m 0755 /usr/local/bin/docker-init debian/docker-ce/usr/bin/docker-init
 +	# moby-snapshot install
-+	install -D -m 0644 /sources/docker.service debian/moby-snapshot/lib/systemd/system/docker.service
-+	install -D -m 0644 /sources/docker.socket debian/moby-snapshot/lib/systemd/system/docker.socket
++	install -D -m 0644 engine/contrib/init/systemd/docker.service debian/moby-snapshot/lib/systemd/system/docker.service
++	install -D -m 0644 engine/contrib/init/systemd/docker.socket debian/moby-snapshot/lib/systemd/system/docker.socket
 +	install -D -m 0755 $(shell readlink -e engine/bundles/dynbinary-daemon/dockerd) debian/moby-snapshot/usr/bin/dockerd
 +	install -D -m 0755 /usr/local/bin/docker-proxy debian/moby-snapshot/usr/bin/docker-proxy
 +	install -D -m 0755 /usr/local/bin/docker-init debian/moby-snapshot/usr/bin/docker-init
  
--	# docker-ce-rootless-extras install
+-	# docker-scan-plugin install
++	# moby-snapshot-cli-scan-plugin install
+ 	# TODO change once we support scan-plugin on other architectures
+ 	if [ "$(TARGET_ARCH)" = "amd64" ]; then \
+-		install -D -m 0755 /usr/libexec/docker/cli-plugins/docker-scan debian/docker-scan-plugin/usr/libexec/docker/cli-plugins/docker-scan; \
++		install -D -m 0755 /usr/libexec/docker/cli-plugins/docker-scan debian/moby-snapshot-scan-cli-plugin/usr/libexec/docker/cli-plugins/docker-scan; \
+ 	fi
+ 
+ 	# docker-ce-rootless-extras install
 -	install -D -m 0755 /usr/local/bin/rootlesskit debian/docker-ce-rootless-extras/usr/bin/rootlesskit
 -	install -D -m 0755 /usr/local/bin/rootlesskit-docker-proxy debian/docker-ce-rootless-extras/usr/bin/rootlesskit-docker-proxy
 -	install -D -m 0755 engine/contrib/dockerd-rootless.sh debian/docker-ce-rootless-extras/usr/bin/dockerd-rootless.sh
 -	install -D -m 0755 engine/contrib/dockerd-rootless-setuptool.sh debian/docker-ce-rootless-extras/usr/bin/dockerd-rootless-setuptool.sh
-+	# moby-snapshot-rootless-extras install
 +	install -D -m 0755 /usr/local/bin/rootlesskit debian/moby-snapshot-rootless-extras/usr/bin/rootlesskit
 +	install -D -m 0755 /usr/local/bin/rootlesskit-docker-proxy debian/moby-snapshot-rootless-extras/usr/bin/rootlesskit-docker-proxy
 +	install -D -m 0755 engine/contrib/dockerd-rootless.sh debian/moby-snapshot-rootless-extras/usr/bin/dockerd-rootless.sh
@@ -199,17 +222,25 @@ index 5e10188..81ec263 100755
  	dh_installinit --name=docker
  
  override_dh_shlibdeps:
-@@ -62,7 +62,7 @@ override_dh_shlibdeps:
+@@ -78,14 +78,14 @@ override_dh_shlibdeps:
  override_dh_install:
  	dh_install
  	# TODO Can we do this from within our container?
 -	dh_apparmor --profile-name=docker-ce -pdocker-ce
 +	dh_apparmor --profile-name=moby-snapshot -pmoby-snapshot
  
- %:
- 	dh $@ --with=bash-completion $(shell command -v dh_systemd_enable > /dev/null 2>&1 && echo --with=systemd)
+ override_dh_gencontrol:
+ 	# Use separate version for the scan-plugin package, then generate the other control files as usual
+ 	# TODO override "Source" field in control as well (to point to scan-cli-plugin, as it doesn't match the package name)
+ 	# TODO change once we support scan-plugin on other architectures (see dpkg-architecture -L)
+ 	if [ "$(TARGET_ARCH)" = "amd64" ]; then \
+-		dh_gencontrol -pdocker-scan-plugin -- -v$${SCAN_VERSION#v}~$${DISTRO}-$${SUITE}; \
++		dh_gencontrol -pmoby-snapshot-cli-scan-plugin -- -v$${SCAN_VERSION#v}~$${DISTRO}-$${SUITE}; \
+ 	fi
+ 	dh_gencontrol --remaining-packages
+ 
 diff --git a/rpm/SPECS/docker-ce-cli.spec b/rpm/SPECS/docker-ce-cli.spec
-index 7209b87..8b493a6 100644
+index 8dd6fea..a3d01ee 100644
 --- a/rpm/SPECS/docker-ce-cli.spec
 +++ b/rpm/SPECS/docker-ce-cli.spec
 @@ -1,6 +1,6 @@
@@ -233,7 +264,7 @@ index 7209b87..8b493a6 100644
  
  # required packages on install
  Requires: /bin/sh
-@@ -27,17 +27,11 @@ Conflicts: docker-io
+@@ -31,17 +31,11 @@ Conflicts: docker-io
  Conflicts: docker-engine-cs
  Conflicts: docker-ee
  Conflicts: docker-ee-cli
@@ -296,7 +327,7 @@ index e52cfec..abc4bae 100644
  Use dockerd-rootless-setuptool.sh to setup systemd for dockerd-rootless.sh .
  This package contains RootlessKit, but does not contain VPNKit.
 diff --git a/rpm/SPECS/docker-ce.spec b/rpm/SPECS/docker-ce.spec
-index d264189..0adf8c6 100644
+index 4bbd7f6..54a038c 100644
 --- a/rpm/SPECS/docker-ce.spec
 +++ b/rpm/SPECS/docker-ce.spec
 @@ -3,7 +3,7 @@
@@ -308,7 +339,7 @@ index d264189..0adf8c6 100644
  Version: %{_version}
  Release: %{_release}%{?dist}
  Epoch: 3
-@@ -13,13 +13,13 @@ Source2: docker.socket
+@@ -11,13 +11,13 @@ Source0: engine.tgz
  Summary: The open-source application container engine
  Group: Tools/Docker
  License: ASL 2.0
@@ -327,7 +358,7 @@ index d264189..0adf8c6 100644
  Requires: container-selinux >= 2:2.74
  Requires: libseccomp >= 2.3
  Requires: systemd
-@@ -58,6 +58,7 @@ Conflicts: docker
+@@ -52,6 +52,7 @@ Conflicts: docker
  Conflicts: docker-io
  Conflicts: docker-engine-cs
  Conflicts: docker-ee
@@ -335,7 +366,7 @@ index d264189..0adf8c6 100644
  
  # Obsolete packages
  Obsoletes: docker-ce-selinux
-@@ -65,15 +66,7 @@ Obsoletes: docker-engine-selinux
+@@ -59,15 +60,7 @@ Obsoletes: docker-engine-selinux
  Obsoletes: docker-engine
  
  %description
@@ -352,6 +383,30 @@ index d264189..0adf8c6 100644
  
  %prep
  %setup -q -c -n src -a 0
+diff --git a/rpm/SPECS/docker-scan-plugin.spec b/rpm/SPECS/docker-scan-plugin.spec
+index c5da401..ab39484 100644
+--- a/rpm/SPECS/docker-scan-plugin.spec
++++ b/rpm/SPECS/docker-scan-plugin.spec
+@@ -1,6 +1,6 @@
+ %global debug_package %{nil}
+ 
+-Name: docker-scan-plugin
++Name: moby-snapshot-cli-scan-plugin
+ Version: %{_scan_rpm_version}
+ Release: %{_release}%{?dist}
+ Epoch: 0
+@@ -10,9 +10,9 @@ Group: Tools/Docker
+ License: ASL 2.0
+ URL: https://github.com/docker/scan-cli-plugin/
+ Vendor: Docker
+-Packager: Docker <support@docker.com>
++Packager: Akihiro Suda
+ 
+-Requires: docker-ce-cli
++Requires: moby-snapshot-cli
+ 
+ # TODO change once we support scan-plugin on other architectures
+ BuildArch: x86_64
 -- 
-2.27.0
+2.30.2
 

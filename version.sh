@@ -20,10 +20,11 @@ $(x CONTAINERD containerd/containerd "containerd")
 $(x DOCKER_ENGINE moby/moby "Docker Engine (Moby)")
 $(x DOCKER_CLI docker/cli "Docker CLI")
 $(x CONTAINERD_PACKAGING docker/containerd-packaging "RPM/DEB specs for containerd")
-# RPM/DEB specs for Docker
-DOCKER_CE_PACKAGING_REF=4865d0386b312294a2a6f8dc5a0ed0bfbfff862c
+# Docker scan plugin (Hard-coded to avoid "version number does not start with digit" error)
+DOCKER_SCAN_REF=v0.8.0
+# RPM/DEB specs for Docker (Hard-coded because we have patches)
+DOCKER_CE_PACKAGING_REF=409ab6ccdcfb4a32d296d5bee23697cfbd114273
 EOF
-# DOCKER_CE_PACKAGING_REF is hard-coded because we have patches
 
 echo "Wrote _VERSION"
 set -x
